@@ -3,20 +3,19 @@ requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "tlux"
+name = "tlux_lazy"
 version = "0.1.0"
 description = "Automatically compare ML models with different preprocessing and scaling techniques."
 readme = "README.md"
-license = {text = "MIT"}
+license = "MIT"
 requires-python = ">=3.9"
 authors = [
-    {name = "Tanush Patel", email = "tanush@example.com"},
+    {name = "Tanush Patel", email = "tanush000patel@gmail.com"},
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
