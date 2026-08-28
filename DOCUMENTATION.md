@@ -11,7 +11,7 @@ Full technical documentation for the `automl_comparator` package.
 | `api.py` | Public `compare_models()` entry point |
 | `comparator.py` | Core engine + metric definitions + `run_experiments()` |
 | `detector.py` | Problem-type validation (`is_classification`) |
-| `leaderboard.py` | Build + print leaderboard, print experiment details |
+| `leaderboard.py` | Build the sorted leaderboard DataFrame |
 | `models.py` | Model catalogues, `resolve_models()`, `get_model_names()` |
 | `scalers.py` | Scaler catalogue, pipeline construction |
 
@@ -39,8 +39,6 @@ compare_models(
     sort_by=None,
     ascending=False,
     n_jobs=1,
-    verbose=True,
-    detailed=False,
 ) -> pandas.DataFrame
 ```
 
@@ -62,8 +60,6 @@ compare_models(
 | `sort_by` | `str`/`None` | `None` | Metric to sort leaderboard by. `None` → default (Accuracy/R²). |
 | `ascending` | `bool` | `False` | `False` → best on top; `True` → worst on top. |
 | `n_jobs` | `int` | `1` | Parallel jobs. `1` → sequential. |
-| `verbose` | `bool` | `True` | Print progress. |
-| `detailed` | `bool` | `False` | Print per-experiment breakdown. |
 
 > **Note:** `is_classification` is now **required** — there is no automatic
 > detection. It raises `TypeError` if omitted and `ValueError` if it conflicts
@@ -102,14 +98,6 @@ results = run_experiments(
 ### `build_leaderboard(results, sort_by=None, ascending=False)` *(in `leaderboard.py`)*
 
 Converts the list of result dicts into a sorted `pandas.DataFrame`.
-
-### `print_leaderboard(df, sort_by=None)` *(in `leaderboard.py`)*
-
-Pretty-prints a leaderboard DataFrame to stdout.
-
-### `print_experiment_detail(result)` *(in `leaderboard.py`)*
-
-Prints a detailed breakdown of one experiment result dict.
 
 ### `is_classification(y)` *(in `detector.py`)*
 
@@ -245,7 +233,6 @@ lb = compare_models(
     scale_columns=[0, 1, 3],
     models=["XGBoost", "Random Forest", "Ridge"],
     sort_by="R2",
-    detailed=True,
 )
 ```
 

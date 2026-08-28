@@ -26,7 +26,8 @@ library runs all the experiments for you and returns a **model leaderboard**.
   R² / MAE / MSE / RMSE (regression). Fully customisable.
 - **Run only the models you want** — pass a name, list, class, or dict.
 - **Parallel training** via `n_jobs` (joblib).
-- **Rich output** — leaderboard table + detailed per-experiment breakdown.
+- **Clean result** — returns a ready-to-use leaderboard `DataFrame`; errors are
+  printed to stderr.
 
 ---
 
@@ -149,26 +150,6 @@ compare_models(..., sort_by="MAE", ascending=True)
 
 ---
 
-## Detailed Experiment Output
-
-```python
-compare_models(..., detailed=True)
-```
-
-Prints a full breakdown for every experiment:
-
-```text
---- Experiment: SVC ---
-  Preprocessing : StandardScaler
-  Scaled Columns: 0, 2
-  Accuracy       : 1.0
-  Precision      : 1.0
-  Recall         : 1.0
-  F1             : 1.0
-```
-
----
-
 ## Workflow
 
 ```
@@ -224,7 +205,6 @@ from tlux import (
     run_experiments,      # Run experiments manually
     is_classification,    # Detect problem type
     build_leaderboard,    # Build leaderboard from results
-    print_leaderboard,    # Pretty-print leaderboard
     CLASSIFICATION_MODELS, # List of classification model names
     REGRESSION_MODELS,     # List of regression model names
     get_model_names,       # Get model names by problem type

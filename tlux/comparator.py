@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 import warnings
 from typing import Any, Dict, List, Optional, Union
 
@@ -119,7 +120,6 @@ def run_experiments(
     metrics: Optional[Dict[str, Any]] = None,
     problem: Optional[str] = None,
     n_jobs: int = 1,
-    verbose: bool = True,
 ) -> List[Dict[str, Any]]:
     """Run all (model × scaler) experiments and return result dicts.
 
@@ -157,8 +157,6 @@ def run_experiments(
         against ``is_classification``; not used for auto-detection.
     n_jobs : int
         Number of parallel jobs (via joblib). 1 = sequential.
-    verbose : bool
-        Print progress to stdout.
 
     Returns
     -------
@@ -212,8 +210,6 @@ def run_experiments(
             )
 
     problem = "classification" if is_classification else "regression"
-    if verbose:
-        print(f"Problem type: {problem}")
 
     if models is None:
         models = CLASSIFICATION_MODELS if problem == "classification" else REGRESSION_MODELS
@@ -245,10 +241,6 @@ def run_experiments(
     if metrics is None:
         metrics = _get_metrics(problem)
 
-    total = len(models) * len(scalers)
-    if verbose:
-        print(f"Running {total} experiments ({len(models)} models × {len(scalers)} scalers)...\n")
-
     combos = [
         (model_cls, model_name, scaler_name)
         for model_name, model_cls in models.items()
@@ -271,8 +263,11 @@ def run_experiments(
         ]
         results = Parallel(n_jobs=n_jobs)(jobs)
 
-    succeeded = sum(1 for r in results if r["error"] is None)
-    if verbose:
-        print(f"Completed: {succeeded}/{total} succeeded.\n")
+    for r in results:
+        if r["error"]:
+            print(
+                f"[ERROR] {r['model_name']} | {r['scaler_name']}: {r['error']}",
+                file=sys.stderr,
+            )
 
     return results

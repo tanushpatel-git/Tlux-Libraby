@@ -12,7 +12,6 @@ from tlux import (
     run_experiments,
     is_classification,
     build_leaderboard,
-    print_leaderboard,
     CLASSIFICATION_MODELS,
     REGRESSION_MODELS,
     get_model_names,
@@ -130,7 +129,6 @@ class TestRunExperiments:
             is_classification=True,
             models={"RF": RandomForestClassifier},
             scalers=["No Scaling"],
-            verbose=False,
         )
         assert len(results) == 1
         assert results[0]["model_name"] == "RF"
@@ -144,7 +142,6 @@ class TestRunExperiments:
             is_classification=False,
             models={"RF": RandomForestRegressor},
             scalers=["No Scaling"],
-            verbose=False,
         )
         assert len(results) == 1
         assert results[0]["model_name"] == "RF"
@@ -158,7 +155,6 @@ class TestRunExperiments:
             is_classification=True,
             models={"LR": LogisticRegression},
             scalers=["No Scaling", "StandardScaler"],
-            verbose=False,
         )
         assert len(results) == 2
         scaler_names = {r["scaler_name"] for r in results}
@@ -172,7 +168,6 @@ class TestRunExperiments:
             is_classification=True,
             models={"LR": LogisticRegression},
             scalers=["No Scaling"],
-            verbose=False,
         )
         assert len(results) == 1
         assert results[0]["error"] is None
@@ -187,7 +182,6 @@ class TestRunExperiments:
             models={"LR": LogisticRegression},
             scalers=["No Scaling"],
             metrics=custom,
-            verbose=False,
         )
         assert "Acc" in results[0]["metrics"]
 
@@ -199,7 +193,6 @@ class TestRunExperiments:
                 is_classification=True,
                 models=["NonExistentModel"],
                 scalers=["No Scaling"],
-                verbose=False,
             )
 
     def test_missing_is_classification_raises(self, classification_split):
@@ -209,7 +202,6 @@ class TestRunExperiments:
                 X_train, y_train, X_test, y_test,
                 models={"RF": RandomForestClassifier},
                 scalers=["No Scaling"],
-                verbose=False,
             )
 
     def test_conflicting_problem_raises(self, classification_split):
@@ -221,7 +213,6 @@ class TestRunExperiments:
                 problem="regression",
                 models={"RF": RandomForestClassifier},
                 scalers=["No Scaling"],
-                verbose=False,
             )
 
     def test_classification_mismatch_raises(self, regression_split):
@@ -232,7 +223,6 @@ class TestRunExperiments:
                 is_classification=True,
                 models={"RF": RandomForestRegressor},
                 scalers=["No Scaling"],
-                verbose=False,
             )
 
     def test_regression_mismatch_raises(self, classification_split):
@@ -243,7 +233,6 @@ class TestRunExperiments:
                 is_classification=False,
                 models={"RF": RandomForestClassifier},
                 scalers=["No Scaling"],
-                verbose=False,
             )
 
     def test_default_scale_runs_raw_only(self, classification_split):
@@ -252,7 +241,6 @@ class TestRunExperiments:
             X_train, y_train, X_test, y_test,
             is_classification=True,
             models={"LR": LogisticRegression},
-            verbose=False,
         )
         assert len(results) == 1
         assert results[0]["scaler_name"] == "No Scaling"
@@ -264,7 +252,6 @@ class TestRunExperiments:
             is_classification=True,
             scale=True,
             models={"LR": LogisticRegression},
-            verbose=False,
         )
         assert len(results) == 8
         assert {r["scaler_name"] for r in results} == set(get_scaler_names())
@@ -277,7 +264,6 @@ class TestRunExperiments:
             scale=True,
             scale_columns=[1, 3],
             models={"LR": LogisticRegression},
-            verbose=False,
         )
         assert all(r["scaled_columns_str"] == "1, 3" for r in results)
 
@@ -289,7 +275,6 @@ class TestRunExperiments:
             scale=True,
             scalers=["MinMaxScaler"],
             models={"LR": LogisticRegression},
-            verbose=False,
         )
         assert len(results) == 1
         assert results[0]["scaler_name"] == "MinMaxScaler"
@@ -301,7 +286,6 @@ class TestRunExperiments:
             is_classification=True,
             scale="StandardScaler",
             models={"LR": LogisticRegression},
-            verbose=False,
         )
         assert len(results) == 1
         assert results[0]["scaler_name"] == "StandardScaler"
@@ -313,7 +297,6 @@ class TestRunExperiments:
             is_classification=True,
             scale=["MinMaxScaler", "RobustScaler"],
             models={"LR": LogisticRegression},
-            verbose=False,
         )
         assert len(results) == 2
         assert {r["scaler_name"] for r in results} == {"MinMaxScaler", "RobustScaler"}
@@ -326,7 +309,6 @@ class TestRunExperiments:
                 is_classification=True,
                 scale="BogusScaler",
                 models={"LR": LogisticRegression},
-                verbose=False,
             )
 
 
@@ -346,7 +328,6 @@ class TestBuildLeaderboard:
             is_classification=True,
             models={"LR": LogisticRegression},
             scalers=["No Scaling"],
-            verbose=False,
         )
         df = build_leaderboard(results)
         assert "Model" in df.columns
@@ -360,7 +341,6 @@ class TestBuildLeaderboard:
             is_classification=True,
             models={"LR": LogisticRegression},
             scalers=["No Scaling"],
-            verbose=False,
         )
         df = build_leaderboard(results, sort_by="Accuracy", ascending=False)
         assert df["Accuracy"].is_monotonic_decreasing
@@ -372,7 +352,6 @@ class TestBuildLeaderboard:
             is_classification=True,
             models={"LR": LogisticRegression},
             scalers=["No Scaling"],
-            verbose=False,
         )
         with pytest.raises(ValueError, match="sort_by="):
             build_leaderboard(results, sort_by="NonExistent")
@@ -390,7 +369,6 @@ class TestCompareModels:
             is_classification=True,
             models={"LR": LogisticRegression},
             scalers=["No Scaling"],
-            verbose=False,
         )
         assert isinstance(df, pd.DataFrame)
         assert not df.empty
@@ -402,23 +380,9 @@ class TestCompareModels:
             is_classification=False,
             models={"LR": LinearRegression},
             scalers=["No Scaling"],
-            verbose=False,
         )
         assert isinstance(df, pd.DataFrame)
         assert "R2" in df.columns
-
-    def test_detailed_output(self, classification_split, capsys):
-        X_train, X_test, y_train, y_test = classification_split
-        compare_models(
-            X_train, y_train, X_test, y_test,
-            is_classification=True,
-            models={"LR": LogisticRegression},
-            scalers=["No Scaling"],
-            verbose=False,
-            detailed=True,
-        )
-        captured = capsys.readouterr()
-        assert "Detailed Results" in captured.out
 
     def test_with_dataframe_input(self, classification_split):
         X_train, X_test, y_train, y_test = classification_split
@@ -428,7 +392,6 @@ class TestCompareModels:
             is_classification=True,
             models={"LR": LogisticRegression},
             scalers=["No Scaling"],
-            verbose=False,
         )
         assert isinstance(df_compare, pd.DataFrame)
         assert not df_compare.empty

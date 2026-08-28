@@ -201,7 +201,7 @@ negative values.
 | Tests many models & scalers at once | No hyperparameter tuning yet |
 | Column-level scaling control | No categorical encoding / missing-value handling |
 | Handles classification & regression | Some defaults (e.g. RBF SVR) may under-fit |
-| Clean leaderboard + detailed view | Uses default hyperparameters only |
+| Clean leaderboard DataFrame | Uses default hyperparameters only |
 | Comparative & explainable | Training all combos can be slow (use `n_jobs`) |
 
 ### 18. What are the built-in models vs external ones?
@@ -241,5 +241,5 @@ the error message for the available list.
 
 ### 23. All my metrics are `NaN`
 
-That experiment failed silently (recorded in `error`). Use `verbose=True` or
-inspect the result dicts to see why.
+That experiment failed (recorded in `error`, and printed to stderr). Inspect
+the result dicts' `error` field to see why.

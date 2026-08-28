@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
@@ -70,32 +70,3 @@ def build_leaderboard(
         )
 
     return df
-
-
-def print_leaderboard(df: pd.DataFrame, sort_by: str | None = None) -> None:
-    """Pretty-print the leaderboard to stdout."""
-    if df.empty:
-        print("No results to display.")
-        return
-
-    print("\n" + "=" * 80)
-    header = "  MODEL LEADERBOARD"
-    if sort_by:
-        header += f"  (sorted by {sort_by})"
-    print(header)
-    print("=" * 80)
-    print(df.to_string(index=False))
-    print("=" * 80 + "\n")
-
-
-def print_experiment_detail(result: Dict[str, Any]) -> None:
-    """Print a detailed breakdown of a single experiment."""
-    print(f"\n--- Experiment: {result['model_name']} ---")
-    print(f"  Preprocessing : {result['scaler_name']}")
-    print(f"  Scaled Columns: {result.get('scaled_columns_str', '—')}")
-    if result.get("error"):
-        print(f"  ERROR         : {result['error']}")
-    else:
-        for metric_name, value in result.get("metrics", {}).items():
-            print(f"  {metric_name:<15}: {value}")
-    print()

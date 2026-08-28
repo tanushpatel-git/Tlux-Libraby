@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 from .comparator import run_experiments
-from .leaderboard import build_leaderboard, print_experiment_detail, print_leaderboard
+from .leaderboard import build_leaderboard
 
 
 def compare_models(
@@ -27,8 +27,6 @@ def compare_models(
     sort_by: Optional[str] = None,
     ascending: bool = False,
     n_jobs: int = 1,
-    verbose: bool = True,
-    detailed: bool = False,
 ) -> pd.DataFrame:
     """Compare many ML models with different scalers and return a leaderboard.
 
@@ -70,10 +68,6 @@ def compare_models(
         Sort direction. ``False`` = best score on top (default).
     n_jobs : int
         Parallel jobs via joblib (default 1 = sequential).
-    verbose : bool
-        Print progress info.
-    detailed : bool
-        Print a detailed breakdown of every experiment after completion.
 
     Returns
     -------
@@ -93,15 +87,6 @@ def compare_models(
         metrics=metrics,
         problem=problem,
         n_jobs=n_jobs,
-        verbose=verbose,
     )
 
-    leaderboard = build_leaderboard(results, sort_by=sort_by, ascending=ascending)
-    print_leaderboard(leaderboard, sort_by=sort_by)
-
-    if detailed:
-        print("\n--- Detailed Results ---")
-        for r in results:
-            print_experiment_detail(r)
-
-    return leaderboard
+    return build_leaderboard(results, sort_by=sort_by, ascending=ascending)

@@ -93,11 +93,11 @@ run all experiments, and show a leaderboard. It's the convenience API.
 **raw results** (list of dicts) without printing, enabling custom analysis,
 saving results, or building their own reports.
 
-### `build_leaderboard(...)` / `print_leaderboard(...)` — presentation
+### `build_leaderboard(...)` — presentation
 
-**Why:** Turns the raw experiment results into a **sorted, readable table** and
-prints it. Keeping these separate means you can re-sort or reformat without
-re-running any model.
+**Why:** Turns the raw experiment results into a **sorted, readable table**
+returned as a `DataFrame`. Keeping it as a pure function means you can re-sort
+or reformat without re-running any model.
 
 ### `is_classification(y)` — validation
 
