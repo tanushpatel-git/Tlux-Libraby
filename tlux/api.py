@@ -17,6 +17,8 @@ def compare_models(
     X_test: Union[np.ndarray, pd.DataFrame],
     y_test: Union[np.ndarray, pd.Series],
     *,
+    is_classification: bool,
+    scale: Union[bool, str, List[str]] = False,
     scale_columns: Optional[List[int]] = None,
     models: Optional[Dict[str, Any]] = None,
     scalers: Optional[List[str]] = None,
@@ -34,19 +36,32 @@ def compare_models(
     ----------
     X_train, y_train, X_test, y_test : array-like
         Train/test data.
+    is_classification : bool
+        **Required.** ``True`` → classification, ``False`` → regression.
+        Must be passed explicitly; there is no auto-detection.
+    scale : bool | str | list[str]
+        Scaling select. ``False`` (default) → runs on the **raw, unscaled**
+        data only. ``True`` → tries every scaling technique. A scaler name
+        (``"StandardScaler"``) or a list of names
+        (``["MinMaxScaler", "RobustScaler"]``) → tries **only** those specific
+        techniques.
     scale_columns : list[int] | None
-        Column indices to scale. ``None`` → scale all numeric columns.
+        Column indices to scale. Only active when scaling is enabled. ``None``
+        → scale all columns; ``[1, 2, 4]`` → scale only those columns.
     models : str | list | type | dict | None
         Which model(s) to run. Accepts a single name (``"XGBoost"``),
         a list of names (``["XGBoost", "Random Forest"]``), one or more
         estimator classes, or a ``{name: class}`` dict. ``None`` → all
-        built-in models for the detected problem type.
+        built-in models for the chosen problem type.
     scalers : list[str] | None
-        Scaler names to evaluate. ``None`` → all built-in scalers.
+        Scaler names to evaluate. Highest priority: overrides ``scale`` when
+        provided. ``None`` → decided by ``scale`` (raw only, all scalers, or
+        specific scalers).
     metrics : dict | None
         Custom ``{name: callable}`` mapping. ``None`` → built-in set.
     problem : str | None
-        ``"classification"`` or ``"regression"``. Auto-detected if ``None``.
+        ``"classification"`` or ``"regression"``. Optional cross-check only;
+        must agree with ``is_classification``.
     sort_by : str | None
         Metric name to sort the leaderboard by (e.g. ``"F1"``).
         ``None`` → default: sort by ``"Accuracy"`` (classification) or
@@ -70,6 +85,8 @@ def compare_models(
         y_train,
         X_test,
         y_test,
+        is_classification=is_classification,
+        scale=scale,
         scale_columns=scale_columns,
         models=models,
         scalers=scalers,

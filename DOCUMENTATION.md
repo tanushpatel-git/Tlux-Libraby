@@ -10,7 +10,7 @@ Full technical documentation for the `automl_comparator` package.
 | --- | --- |
 | `api.py` | Public `compare_models()` entry point |
 | `comparator.py` | Core engine + metric definitions + `run_experiments()` |
-| `detector.py` | Problem-type detection (`is_classification`) |
+| `detector.py` | Problem-type validation (`is_classification`) |
 | `leaderboard.py` | Build + print leaderboard, print experiment details |
 | `models.py` | Model catalogues, `resolve_models()`, `get_model_names()` |
 | `scalers.py` | Scaler catalogue, pipeline construction |
@@ -29,6 +29,8 @@ The single entry point users call most of the time.
 compare_models(
     X_train, y_train, X_test, y_test,
     *,
+    is_classification,       # required
+    scale=False,             # opt-in scaling
     scale_columns=None,
     models=None,
     scalers=None,
@@ -50,16 +52,26 @@ compare_models(
 | `y_train` | array-like (1D) | — | Training target |
 | `X_test` | array-like (2D) | — | Test features |
 | `y_test` | array-like (1D) | — | Test target |
-| `scale_columns` | `list[int]`/`None` | `None` | Column indices to scale. `None` → **all** columns scaled. |
+| `is_classification` | `bool` | **required** | `True` → classification, `False` → regression. Must be passed explicitly. |
+| `scale` | `bool`/`str`/`list[str]` | `False` | Scaling select. `False` → **raw** data only. `True` → every technique. `"StandardScaler"` → that one. `["MinMaxScaler","RobustScaler"]` → those only. Unknown name → `ValueError`. |
+| `scale_columns` | `list[int]`/`None` | `None` | Column indices to scale (active when scaling is enabled). `None` → **all** columns scaled; `[1,2,4]` → only those columns. |
 | `models` | `str`/`list`/`type`/`dict`/`None` | `None` | Which models to run. `None` → all built-in. |
-| `scalers` | `list[str]`/`None` | `None` | Which scalers to try. `None` → all built-in. |
+| `scalers` | `list[str]`/`None` | `None` | Exact scaler names to try. Overrides `scale` when provided. `None` → decided by `scale`. |
 | `metrics` | `dict`/`None` | `None` | Custom `{name: callable}` metrics. `None` → built-in set. |
-| `problem` | `"classification"`/`"regression"`/`None` | `None` | Force problem type. `None` → auto-detect. |
+| `problem` | `"classification"`/`"regression"`/`None` | `None` | Optional cross-check only. If provided, must match `is_classification`. |
 | `sort_by` | `str`/`None` | `None` | Metric to sort leaderboard by. `None` → default (Accuracy/R²). |
 | `ascending` | `bool` | `False` | `False` → best on top; `True` → worst on top. |
 | `n_jobs` | `int` | `1` | Parallel jobs. `1` → sequential. |
 | `verbose` | `bool` | `True` | Print progress. |
 | `detailed` | `bool` | `False` | Print per-experiment breakdown. |
+
+> **Note:** `is_classification` is now **required** — there is no automatic
+> detection. It raises `TypeError` if omitted and `ValueError` if it conflicts
+> with an explicit `problem`.
+
+> **Scaling is opt-in.** Without `scale=True` the library runs only on the raw,
+> unscaled data. Pass `scale=True` (optionally with `scale_columns`) to enable
+> the full set of scaling techniques.
 
 **Returns**
 
@@ -79,8 +91,9 @@ DataFrame. `compare_models()` wraps this.
 ```python
 results = run_experiments(
     X_train, y_train, X_test, y_test,
-    scale_columns=[0, 2],
-    sort_by=None,           # not used here — sorting happens in leaderboard
+    is_classification=True,   # required: True=classification, False=regression
+    scale=True,               # opt-in scaling
+    scale_columns=[0, 2],     # scale only columns 0 and 2 (None = all)
 )
 # results: [ {"model_name": ..., "scaler_name": ...,
 #             "scaled_columns_str": ..., "metrics": {...}, "error": None}, ... ]
@@ -100,7 +113,10 @@ Prints a detailed breakdown of one experiment result dict.
 
 ### `is_classification(y)` *(in `detector.py`)*
 
-Heuristic problem-type detector. Returns `True` if `y` is:
+Heuristic helper used to **validate** the required `is_classification` flag
+against your data. `compare_models` / `run_experiments` do **not** auto-detect — if the flag you pass does not match `y_train`, they raise a `ValueError`.
+You can call this helper yourself to check your target and pick the right flag.
+Returns `True` if `y` is:
 - object / string / bool / category dtype, **or**
 - numeric with ≤ 20 unique **integer** values.
 
@@ -204,6 +220,7 @@ def my_metric(y_true, y_pred):
 
 compare_models(
     X_train, y_train, X_test, y_test,
+    is_classification=True,
     metrics={"CustomMetric": my_metric},
     sort_by="CustomMetric",
 )
@@ -223,6 +240,8 @@ Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, random_state=42)
 
 lb = compare_models(
     Xtr, ytr, Xte, yte,
+    is_classification=False,
+    scale=True,
     scale_columns=[0, 1, 3],
     models=["XGBoost", "Random Forest", "Ridge"],
     sort_by="R2",

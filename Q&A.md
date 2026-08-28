@@ -21,10 +21,31 @@ under your control. (Cross-validation is a planned future feature.)
 
 ### 3. Classification or regression — do I pick?
 
-Usually not. The library **auto-detects** the problem type from your `y`
-values. You can still force it with `problem="classification"` if you want.
+**Yes — you must.** The library does **not** auto-detect. Pass the required
+`is_classification=True` (classification) or `is_classification=False`
+(regression) flag:
 
-| Detection rule | Treated as |
+```python
+compare_models(..., is_classification=True)    # classification
+compare_models(..., is_classification=False)   # regression
+```
+
+If you aren't sure, you can use the `is_classification(y)` helper to check your
+target, then hand its result to the call:
+
+```python
+from tlux import is_classification
+compare_models(..., is_classification=is_classification(y_train))
+```
+
+**The flag is validated against your data.** If the flag you pass does not
+match `y_train`, the call **raises a `ValueError`** instead of running — no
+silent auto-detection, no guessing:
+
+- `is_classification=True` on regression/continuous `y` → error, telling you to use `False`.
+- `is_classification=False` on categorical / few-unique-integer `y` → error, telling you to use `True`.
+
+| `is_classification(y)` returns `True` when | |
 | --- | --- |
 | `y` is strings / booleans / categories | Classification |
 | `y` is numeric with ≤ 20 unique *integer* values | Classification |
@@ -34,22 +55,35 @@ values. You can still force it with `problem="classification"` if you want.
 
 ## ⚙️ Scaling
 
-### 4. Which columns get scaled, and how do I control it?
+### 4. When does scaling happen, and how do I control it?
 
-You control it with `scale_columns`:
+Scaling is **opt-in**. By default the library runs on the **raw, unscaled**
+data only. The `scale` argument lets you pick **which** scaling techniques run:
 
 ```python
-compare_models(..., scale_columns=[0, 2, 4])   # only columns 0, 2, 4
-compare_models(..., scale_columns=None)         # scale ALL columns
+compare_models(..., scale=False)                             # raw data only (default)
+compare_models(..., scale=True)                              # try EVERY technique
+compare_models(..., scale="StandardScaler")                  # just this one
+compare_models(..., scale=["MinMaxScaler", "RobustScaler"])  # just these
 ```
 
-Columns **not** in the list are left **unchanged** (passed through as-is).
+An unknown scaler name raises a `ValueError` listing the available options.
 
-### 5. Which scaling techniques are tried by default?
+To scale only **specific** columns, add `scale_columns` (active when scaling is
+enabled):
+
+```python
+compare_models(..., scale="RobustScaler", scale_columns=[0, 2, 4])
+```
+
+Columns **not** in `scale_columns` are left **unchanged** (passed through as-is).
+
+### 5. Which scaling techniques are available?
 
 `No Scaling, StandardScaler, MinMaxScaler, RobustScaler, MaxAbsScaler,
-Normalizer, PowerTransformer, QuantileTransformer`. You can limit them with
-`scalers=[...]`.
+Normalizer, PowerTransformer, QuantileTransformer`. You can also bypass
+`scale` entirely and pass the exact list via `scalers=[...]` (highest
+priority).
 
 ### 6. Why would I scale only some columns?
 

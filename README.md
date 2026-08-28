@@ -11,13 +11,15 @@ library runs all the experiments for you and returns a **model leaderboard**.
 
 ## Features
 
-- **Auto problem-type detection** — automatically figures out if your data is a
-  classification or regression problem.
+- **Explicit problem type** — you tell it classification or regression via the
+  required `is_classification=True/False` flag (no guesswork). The flag is
+  validated against your data — a mismatch raises an error instead of running.
 - **21 classifiers + 21 regressors** — including XGBoost (optional).
 - **8 scaling techniques** — Standard, MinMax, Robust, MaxAbs, Normalizer,
-  Power, Quantile, plus *No Scaling*.
+  Power, Quantile, plus *No Scaling*. Runs on **raw data by default**; opt in
+  with `scale=True`, a scaler name, or a list of names.
 - **User-controlled column scaling** — pick *exactly* which columns get scaled
-  via `scale_columns`.
+  via `scale_columns` (used together with scaling).
 - **Automated leaderboard** — sorted by the metric you choose (default:
   Accuracy for classification, R² for regression).
 - **7 default metrics** — Accuracy / Precision / Recall / F1 (classification),
@@ -69,11 +71,29 @@ X_train, X_test, y_train, y_test = train_test_split(
     iris.data, iris.target, test_size=0.3, random_state=42
 )
 
-# Compare all models, scaling only columns 0 and 2
+# Raw data only (default — no scaling)
 leaderboard = compare_models(
     X_train, y_train, X_test, y_test,
-    scale_columns=[0, 2],
+    is_classification=True,   # required: True=classification, False=regression
 )
+```
+
+Scaling is **opt-in** with `scale`. You can enable all techniques, scale all
+columns, or pick **specific scaling techniques** and **specific columns**:
+
+```python
+# Raw data only (default) — no scaling
+compare_models(..., is_classification=True)
+
+# Try EVERY scaling technique on ALL columns
+compare_models(..., is_classification=True, scale=True)
+
+# Try specific scaling technique(s)
+compare_models(..., is_classification=True, scale="StandardScaler")
+compare_models(..., is_classification=True, scale=["MinMaxScaler", "RobustScaler"])
+
+# Restrict which columns get scaled (used with any of the above)
+compare_models(..., is_classification=True, scale="RobustScaler", scale_columns=[0, 2])
 ```
 
 Output is a `pandas.DataFrame` (the leaderboard) and a printed table:
@@ -186,7 +206,7 @@ Tlux/
 │   ├── __init__.py      # Public exports
 │   ├── api.py           # compare_models() entry point
 │   ├── comparator.py    # Core engine: runs experiments
-│   ├── detector.py      # Auto-detect classification vs regression
+│   ├── detector.py      # Validate classification vs regression
 │   ├── leaderboard.py   # Build + print leaderboard
 │   ├── models.py        # Model catalogues + model resolution
 │   └── scalers.py       # Scaling techniques + ColumnTransformer

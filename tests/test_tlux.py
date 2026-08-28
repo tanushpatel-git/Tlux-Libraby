@@ -33,6 +33,7 @@ def classification_data():
 
 @pytest.fixture
 def regression_data():
+    # pyrefly: ignore [bad-unpacking]
     X, y = make_regression(n_samples=100, n_features=10, random_state=42)
     return X, y
 
@@ -126,6 +127,7 @@ class TestRunExperiments:
         X_train, X_test, y_train, y_test = classification_split
         results = run_experiments(
             X_train, y_train, X_test, y_test,
+            is_classification=True,
             models={"RF": RandomForestClassifier},
             scalers=["No Scaling"],
             verbose=False,
@@ -139,6 +141,7 @@ class TestRunExperiments:
         X_train, X_test, y_train, y_test = regression_split
         results = run_experiments(
             X_train, y_train, X_test, y_test,
+            is_classification=False,
             models={"RF": RandomForestRegressor},
             scalers=["No Scaling"],
             verbose=False,
@@ -152,6 +155,7 @@ class TestRunExperiments:
         X_train, X_test, y_train, y_test = classification_split
         results = run_experiments(
             X_train, y_train, X_test, y_test,
+            is_classification=True,
             models={"LR": LogisticRegression},
             scalers=["No Scaling", "StandardScaler"],
             verbose=False,
@@ -165,6 +169,7 @@ class TestRunExperiments:
         X_train, X_test, y_train, y_test = classification_split
         results = run_experiments(
             X_train, y_train, X_test, y_test,
+            is_classification=True,
             models={"LR": LogisticRegression},
             scalers=["No Scaling"],
             verbose=False,
@@ -178,6 +183,7 @@ class TestRunExperiments:
         custom = {"Acc": accuracy_score}
         results = run_experiments(
             X_train, y_train, X_test, y_test,
+            is_classification=True,
             models={"LR": LogisticRegression},
             scalers=["No Scaling"],
             metrics=custom,
@@ -190,8 +196,136 @@ class TestRunExperiments:
         with pytest.raises(ValueError, match="Unknown model"):
             run_experiments(
                 X_train, y_train, X_test, y_test,
+                is_classification=True,
                 models=["NonExistentModel"],
                 scalers=["No Scaling"],
+                verbose=False,
+            )
+
+    def test_missing_is_classification_raises(self, classification_split):
+        X_train, X_test, y_train, y_test = classification_split
+        with pytest.raises(TypeError, match="is_classification"):
+            run_experiments(
+                X_train, y_train, X_test, y_test,
+                models={"RF": RandomForestClassifier},
+                scalers=["No Scaling"],
+                verbose=False,
+            )
+
+    def test_conflicting_problem_raises(self, classification_split):
+        X_train, X_test, y_train, y_test = classification_split
+        with pytest.raises(ValueError, match="Conflict"):
+            run_experiments(
+                X_train, y_train, X_test, y_test,
+                is_classification=True,
+                problem="regression",
+                models={"RF": RandomForestClassifier},
+                scalers=["No Scaling"],
+                verbose=False,
+            )
+
+    def test_classification_mismatch_raises(self, regression_split):
+        X_train, X_test, y_train, y_test = regression_split
+        with pytest.raises(ValueError, match="is_classification=True"):
+            run_experiments(
+                X_train, y_train, X_test, y_test,
+                is_classification=True,
+                models={"RF": RandomForestRegressor},
+                scalers=["No Scaling"],
+                verbose=False,
+            )
+
+    def test_regression_mismatch_raises(self, classification_split):
+        X_train, X_test, y_train, y_test = classification_split
+        with pytest.raises(ValueError, match="is_classification=False"):
+            run_experiments(
+                X_train, y_train, X_test, y_test,
+                is_classification=False,
+                models={"RF": RandomForestClassifier},
+                scalers=["No Scaling"],
+                verbose=False,
+            )
+
+    def test_default_scale_runs_raw_only(self, classification_split):
+        X_train, X_test, y_train, y_test = classification_split
+        results = run_experiments(
+            X_train, y_train, X_test, y_test,
+            is_classification=True,
+            models={"LR": LogisticRegression},
+            verbose=False,
+        )
+        assert len(results) == 1
+        assert results[0]["scaler_name"] == "No Scaling"
+
+    def test_scale_true_uses_all_scalers(self, classification_split):
+        X_train, X_test, y_train, y_test = classification_split
+        results = run_experiments(
+            X_train, y_train, X_test, y_test,
+            is_classification=True,
+            scale=True,
+            models={"LR": LogisticRegression},
+            verbose=False,
+        )
+        assert len(results) == 8
+        assert {r["scaler_name"] for r in results} == set(get_scaler_names())
+
+    def test_scale_true_with_columns_scales_only_them(self, classification_split):
+        X_train, X_test, y_train, y_test = classification_split
+        results = run_experiments(
+            X_train, y_train, X_test, y_test,
+            is_classification=True,
+            scale=True,
+            scale_columns=[1, 3],
+            models={"LR": LogisticRegression},
+            verbose=False,
+        )
+        assert all(r["scaled_columns_str"] == "1, 3" for r in results)
+
+    def test_explicit_scalers_overrides_scale(self, classification_split):
+        X_train, X_test, y_train, y_test = classification_split
+        results = run_experiments(
+            X_train, y_train, X_test, y_test,
+            is_classification=True,
+            scale=True,
+            scalers=["MinMaxScaler"],
+            models={"LR": LogisticRegression},
+            verbose=False,
+        )
+        assert len(results) == 1
+        assert results[0]["scaler_name"] == "MinMaxScaler"
+
+    def test_scale_as_single_name(self, classification_split):
+        X_train, X_test, y_train, y_test = classification_split
+        results = run_experiments(
+            X_train, y_train, X_test, y_test,
+            is_classification=True,
+            scale="StandardScaler",
+            models={"LR": LogisticRegression},
+            verbose=False,
+        )
+        assert len(results) == 1
+        assert results[0]["scaler_name"] == "StandardScaler"
+
+    def test_scale_as_list(self, classification_split):
+        X_train, X_test, y_train, y_test = classification_split
+        results = run_experiments(
+            X_train, y_train, X_test, y_test,
+            is_classification=True,
+            scale=["MinMaxScaler", "RobustScaler"],
+            models={"LR": LogisticRegression},
+            verbose=False,
+        )
+        assert len(results) == 2
+        assert {r["scaler_name"] for r in results} == {"MinMaxScaler", "RobustScaler"}
+
+    def test_scale_unknown_name_raises(self, classification_split):
+        X_train, X_test, y_train, y_test = classification_split
+        with pytest.raises(ValueError, match="Unknown scaler"):
+            run_experiments(
+                X_train, y_train, X_test, y_test,
+                is_classification=True,
+                scale="BogusScaler",
+                models={"LR": LogisticRegression},
                 verbose=False,
             )
 
@@ -209,6 +343,7 @@ class TestBuildLeaderboard:
         X_train, X_test, y_train, y_test = classification_split
         results = run_experiments(
             X_train, y_train, X_test, y_test,
+            is_classification=True,
             models={"LR": LogisticRegression},
             scalers=["No Scaling"],
             verbose=False,
@@ -222,6 +357,7 @@ class TestBuildLeaderboard:
         X_train, X_test, y_train, y_test = classification_split
         results = run_experiments(
             X_train, y_train, X_test, y_test,
+            is_classification=True,
             models={"LR": LogisticRegression},
             scalers=["No Scaling"],
             verbose=False,
@@ -233,6 +369,7 @@ class TestBuildLeaderboard:
         X_train, X_test, y_train, y_test = classification_split
         results = run_experiments(
             X_train, y_train, X_test, y_test,
+            is_classification=True,
             models={"LR": LogisticRegression},
             scalers=["No Scaling"],
             verbose=False,
@@ -250,6 +387,7 @@ class TestCompareModels:
         X_train, X_test, y_train, y_test = classification_split
         df = compare_models(
             X_train, y_train, X_test, y_test,
+            is_classification=True,
             models={"LR": LogisticRegression},
             scalers=["No Scaling"],
             verbose=False,
@@ -261,6 +399,7 @@ class TestCompareModels:
         X_train, X_test, y_train, y_test = regression_split
         df = compare_models(
             X_train, y_train, X_test, y_test,
+            is_classification=False,
             models={"LR": LinearRegression},
             scalers=["No Scaling"],
             verbose=False,
@@ -272,6 +411,7 @@ class TestCompareModels:
         X_train, X_test, y_train, y_test = classification_split
         compare_models(
             X_train, y_train, X_test, y_test,
+            is_classification=True,
             models={"LR": LogisticRegression},
             scalers=["No Scaling"],
             verbose=False,
@@ -285,6 +425,7 @@ class TestCompareModels:
         df_compare = compare_models(
             pd.DataFrame(X_train), pd.Series(y_train),
             pd.DataFrame(X_test), pd.Series(y_test),
+            is_classification=True,
             models={"LR": LogisticRegression},
             scalers=["No Scaling"],
             verbose=False,

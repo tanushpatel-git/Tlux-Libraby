@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Dict, Type
+from typing import Dict, Type,Any
 
 from sklearn.base import BaseEstimator
 

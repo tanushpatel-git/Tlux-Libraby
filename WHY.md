@@ -34,22 +34,29 @@ experiments** — mostly copy-paste code. This is:
 
 ---
 
-## 2. The Core Design Decision: User Controls the Columns
+## 2. The Core Design Decision: Scaling Is Opt-In + User Controls Columns
 
-A key idea in this project is that **the user should stay in control of what
-gets scaled**, not the library.
+A key idea in this project is that **the user should stay in control of
+scaling**, not the library. By default the library runs on the **raw, unscaled
+data** — no hidden preprocessing. The `scale` argument opts in and picks
+**which** technique(s) run, and `scale_columns` chooses exactly which columns
+to scale:
 
 ```python
-scale_columns=[0, 2, 4]   # only these columns are scaled
-scale_columns=None        # library scales all columns
+scale=False                          # raw data only (default)
+scale=True                           # every scaling technique
+scale="StandardScaler"               # just one technique
+scale=["MinMaxScaler", "RobustScaler"]  # just a few
+scale="RobustScaler", scale_columns=[0, 2, 4]  # limit columns too
 ```
 
 **Why this matters:**
 
 - Not every column needs scaling (e.g. a binary flag, a small-count integer).
-- Different domains care about different features.
-- Automatic "scale everything" is convenient, but **can hurt** — e.g. scaling a
-  sparse or boolean feature is often meaningless.
+- Different domains care about different features, and different techniques
+  suit different data (outliers → Robust, log-like → Power).
+- Automatic "scale everything by default" can **hurt** — e.g. scaling a sparse
+  or boolean feature is often meaningless, and it silently changes results.
 
 So instead of a black box, we give a **simple, explicit switch** while still
 running the experiments for you.
@@ -92,11 +99,14 @@ saving results, or building their own reports.
 prints it. Keeping these separate means you can re-sort or reformat without
 re-running any model.
 
-### `is_classification(y)` — automation
+### `is_classification(y)` — validation
 
-**Why:** Asking the user "is this classification or regression?" every time is
-annoying. A simple heuristic reads the data (`y` dtype + number of unique
-values) and decides automatically — with an escape hatch (`problem=...`).
+**Why:** `is_classification` is now a **required** argument to
+`compare_models`/`run_experiments` — the library no longer auto-detects. But
+users can still mislabel their data, so this helper validates the flag: if
+`is_classification=True` is passed to regression data (or vice-versa), the
+library raises a clear error instead of silently training the wrong models and
+producing misleading results.
 
 ### `resolve_models(...)` — flexibility
 
