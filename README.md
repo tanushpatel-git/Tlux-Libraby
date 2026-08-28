@@ -1,4 +1,4 @@
-# AutoML Model Comparator
+# tlux_lazy
 
 An **open-source Python library** that automatically compares different Machine
 Learning models along with different preprocessing and scaling techniques.
@@ -9,7 +9,7 @@ library runs all the experiments for you and returns a **model leaderboard**.
 
 ---
 
-## 🚀 Features
+## Features
 
 - **Auto problem-type detection** — automatically figures out if your data is a
   classification or regression problem.
@@ -28,31 +28,40 @@ library runs all the experiments for you and returns a **model leaderboard**.
 
 ---
 
-## 📦 Installation
+## Installation
 
 ```bash
-pip install scikit-learn pandas numpy joblib
+pip install tlux_lazy
+```
+
+For development (includes tests):
+
+```bash
+pip install -e ".[dev]"
 ```
 
 For XGBoost support (optional):
 
 ```bash
-pip install xgboost
+pip install -e ".[xgboost]"
 ```
 
-If `xgboost` isn't installed, the library simply skips it and everything else
-still works.
+Or install everything at once:
+
+```bash
+pip install -e ".[dev,xgboost]"
+```
 
 ---
 
-## 🧠 Quick Start
+## Quick Start
 
 ```python
 import numpy as np
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 
-from automl_comparator import compare_models
+from tlux import compare_models
 
 # Load data
 iris = load_iris()
@@ -78,7 +87,7 @@ Output is a `pandas.DataFrame` (the leaderboard) and a printed table:
 
 ---
 
-## 🎛️ Run Only Specific Models
+## Run Only Specific Models
 
 ```python
 # Single model by name
@@ -98,7 +107,7 @@ compare_models(..., models={"My Custom Model": SVC})
 List available model names first:
 
 ```python
-from automl_comparator import get_model_names
+from tlux import get_model_names
 
 print(get_model_names("classification"))
 print(get_model_names("regression"))
@@ -106,7 +115,7 @@ print(get_model_names("regression"))
 
 ---
 
-## 📊 Sort by Any Metric
+## Sort by Any Metric
 
 ```python
 # Sort the leaderboard by F1-score
@@ -120,7 +129,7 @@ compare_models(..., sort_by="MAE", ascending=True)
 
 ---
 
-## 🔍 Detailed Experiment Output
+## Detailed Experiment Output
 
 ```python
 compare_models(..., detailed=True)
@@ -140,7 +149,7 @@ Prints a full breakdown for every experiment:
 
 ---
 
-## 🔁 Workflow
+## Workflow
 
 ```
 X_train, y_train, X_test, y_test
@@ -164,24 +173,49 @@ X_train, y_train, X_test, y_test
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 Tlux/
 ├── pyproject.toml
-└── automl_comparator/
-    ├── __init__.py      # Public exports
-    ├── api.py           # compare_models() entry point
-    ├── comparator.py    # Core engine: runs experiments
-    ├── detector.py      # Auto-detect classification vs regression
-    ├── leaderboard.py   # Build + print leaderboard
-    ├── models.py        # Model catalogues + model resolution
-    └── scalers.py       # Scaling techniques + ColumnTransformer
+├── README.md
+├── DOCUMENTATION.md
+├── WHY.md
+├── Q&A.md
+├── tlux/
+│   ├── __init__.py      # Public exports
+│   ├── api.py           # compare_models() entry point
+│   ├── comparator.py    # Core engine: runs experiments
+│   ├── detector.py      # Auto-detect classification vs regression
+│   ├── leaderboard.py   # Build + print leaderboard
+│   ├── models.py        # Model catalogues + model resolution
+│   └── scalers.py       # Scaling techniques + ColumnTransformer
+└── tests/
+    └── test_tlux.py     # Test suite (pytest)
 ```
 
 ---
 
-## 🔮 Future Features
+## Public API
+
+```python
+from tlux import (
+    compare_models,       # Main entry point
+    run_experiments,      # Run experiments manually
+    is_classification,    # Detect problem type
+    build_leaderboard,    # Build leaderboard from results
+    print_leaderboard,    # Pretty-print leaderboard
+    CLASSIFICATION_MODELS, # List of classification model names
+    REGRESSION_MODELS,     # List of regression model names
+    get_model_names,       # Get model names by problem type
+    SCALERS,               # List of scaler names
+    get_scaler_names,      # Get available scaler names
+)
+```
+
+---
+
+## Future Features
 
 - Automatic preprocessing
 - Missing-value handling
@@ -198,9 +232,9 @@ Tlux/
 
 ---
 
-## 📜 License
+## License
 
-Open-source (MIT). Free for the Python and Machine Learning community.
+MIT License. Free for the Python and Machine Learning community.
 
 ---
 
